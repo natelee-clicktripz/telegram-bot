@@ -93,6 +93,7 @@ app.post("*", (req, res) => {
                     return tabUrl({checkedCampaigns, uncheckedCampaigns, searchKey, city, checkInDate, checkOutDate, guests, rooms})
                 }).then((taburl) => {
                     sendMessage(telegram_url, message, taburl, res, true);
+                    delete cache[message.chat.id];
                     return null;
                 })
             }
@@ -127,4 +128,4 @@ function sendMessage(url, message, reply, res, parseHtml){
         console.log(error);
     });
 }
-app.listen(3000);
+app.listen();
