@@ -121,7 +121,7 @@ app.post("*", (req, res) => {
                     })
                 }
             }
-        } else {
+        } else if(!reply) {
             reply = 'Please start with "/search" to start your search!';
         }
 
