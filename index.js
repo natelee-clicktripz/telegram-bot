@@ -31,7 +31,7 @@ app.post("*", (req, res) => {
     if(message.text && message.text.toLowerCase() === '/search') {
         cache[message.chat.id] = {}
         cache[message.chat.id]['initialized'] = true;
-        reply = 'Which city would you like to go? Use /city <location>, /checkInDate <date>, /checkOutDate <date>, /guests <number of guests>, /rooms <number of rooms> to set searches! Use "::" to set search at once!'
+        reply = 'Which city would you like to go? Use \n\n/city <location> \n/checkInDate <date> \n/checkOutDate <date> \n/guests <number of guests> \n/rooms <number of rooms> \n\nto set searches! \n\nUse "::" to set search at once!'
     }
 
     if(initialized) {
