@@ -22,6 +22,10 @@ app.post("*", (req, res) => {
     const { message } = req.body;
 
     client.hgetall('telegrambot', (err, info) => {
+        if(err) {
+            console.log(err);
+        }
+
         let user;
         let initialized;
         let reply;
@@ -43,8 +47,14 @@ app.post("*", (req, res) => {
 
         console.log(message);
 
-        if(!initialized && message.text && message.text.toLowerCase() === '/start') {
-            reply = '"Welcome to Clicktripz Travel bot! Please type "/search" to start your search!';
+        if(message.text && message.text.toLowerCase() === '/start') {
+            reply = 'Welcome to Clicktripz Travel bot!';
+
+            if(!initialized) {
+                reply += ' Please type "/search" to start your search!'
+            } else {
+                reply += ' \n\nPlease continue with your search! Use any of the commands below to set searches! \n\n/city <location> \n/checkInDate <date> \n/checkOutDate <date> \n/guests <number of guests> \n/rooms <number of rooms> \n\nUse "::" to set search at once! To start over, type "/search" again.';
+            }
             sendMessage(telegram_url, message, reply, res).then((response) => {
                 res.status(response.status).end();
                 return null;
@@ -53,19 +63,19 @@ app.post("*", (req, res) => {
 
         if(message.text && message.text.toLowerCase() === '/search') {
             client.hset(`telegrambot`, message.chat.id, `{"initialized": true}`);
-            reply = 'Which city would you like to go? Use \n\n/city <location> \n/checkInDate <date> \n/checkOutDate <date> \n/guests <number of guests> \n/rooms <number of rooms> \n\nto set searches! \n\nUse "::" to set search at once!';
+            reply = 'Which city would you like to go? Use any of the commands below to set searches! \n\n/city <location> \n/checkInDate <date> \n/checkOutDate <date> \n/guests <number of guests> \n/rooms <number of rooms> \n\nUse "::" to set search at once! To start over, type "/search" again.';
                 sendMessage(telegram_url, message, reply, res).then((response) => {
                     res.status(response.status).end();
                     return null;
                 });
-
+            return null;
         }
 
         if(initialized) {
 
             let search;
 
-            if(message && message.text) {
+            if(message && message.text && /(\/city|\/checkindate|\/checkoutdate|\/guests|\/rooms)/i.test(message.text)) {
                 if(message.text.toLowerCase().split('::').length) {
                     search = message.text.toLowerCase().split('::');
                 } else {
@@ -86,7 +96,7 @@ app.post("*", (req, res) => {
 
                 for(var searchCheckIndex = 0; searchCheckIndex < hotelCityCheck.length; searchCheckIndex++) {
                     if(!user[hotelCityCheck[searchCheckIndex].replace(/\//g, '')]) {
-                        missingReply += `Missing ${hotelCityCheck[searchCheckIndex]}! `
+                        missingReply += `Missing ${hotelCityCheck[searchCheckIndex]}! \n`
                     }
 
                     if(missingReply !== '' && searchCheckIndex === hotelCityCheck.length - 1) {
@@ -126,17 +136,22 @@ app.post("*", (req, res) => {
                     }).then((taburl) => {
                         sendMessage(telegram_url, message, taburl, res, true).then((response) => {
                             client.hdel('telegrambot', message.chat.id)
-                            res.status(200).end();
+                            res.end();
                             return null;
                         });
                         return null;
                     })
+                } else {
+                    sendMessage(telegram_url, message, missingReply, res).then((response) => {
+                        res.end();
+                        return null;
+                    });
                 }
             }
         } else if(!reply) {
             reply = 'Please start with "/search" to start your search!';
             sendMessage(telegram_url, message, reply, res).then((response) => {
-                res.status(200).end();
+                res.end();
                 return null;
             });
         }
@@ -148,6 +163,10 @@ app.get('*', (req, res) => {
 })
 
 function sendMessage(url, message, reply, res, parseHtml){
+    if(!reply) {
+        reply = 'Welcome to Clicktripz Travel bot!';
+    }
+
     let resOptions = {'chat_id': message.chat.id, text: reply};
 
     if(parseHtml) {
@@ -158,7 +177,7 @@ function sendMessage(url, message, reply, res, parseHtml){
     return axios.post(url, resOptions).then(response => {
         return response;
     }).catch(error =>{
-        res.status(error.status).end();
+        res.end();
     });
 }
-app.listen();
+app.listen(3000);
